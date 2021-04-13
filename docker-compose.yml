@@ -1,0 +1,60 @@
+version: "3"
+
+services:
+  pihole:
+  # More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+    container_name: pihole-test
+    image: pihole/pihole:latest
+    network_mode: host
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "80:80/tcp"
+      - "443:443/tcp"
+    environment:
+      TZ: 'Europe/London'
+      WEBPASSWORD: #super secret password
+      WEB_PORT: 8080
+    # Volumes store your data between container upgrades
+    volumes:
+      - '/home/pi/Pidocker/data/pihole/:/etc/pihole/'
+      - '/home/pi/Pidocker/data/pihole/dnsmasq.d/:/etc/dnsmasq.d/'
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    # https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  web01:
+# Web server for listing the different portals
+    container_name: nginx-test
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - /home/pi/Pidocker/data/nginx/html:/usr/share/nginx/html
+
+  portainer:
+# Docker web management
+    container_name: portainer-ce-test
+    image: portainer/portainer-ce
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    ports:
+      - 9000:9000
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/pi/Pidocker/data/portainer/data:/data
+
+  nodered:
+    container_name: nodered-test
+    image: nodered/node-red:latest
+    restart: always
+    environment:
+      - TZ=Europe/London
+    ports:
+      - 1880:1880
+    volumes:
+      - /home/pi/Pidocker/data/nodered/data:/data
